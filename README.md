@@ -31,6 +31,11 @@ In order to use *main.sh* 3 arguments are required. These are:
 - The year the data to be used was taken [16, 17, 18]
 - The size or amount of data to be used [small, medium, large, 1, 2, 3, 4, 5, 6, 7, 8]
 
+Here is an example of how to call *main.sh*:
+```
+bash main.sh example 18 large
+```
+This should produce the same output as shown in the folder *example*.
 ## Credits
 A large amount of the scripts uses or is inspired by the code written by Camille Jarvis-Stiggants and Michael England during their MPhys project.
 
