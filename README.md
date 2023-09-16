@@ -35,9 +35,9 @@ Here is an example of how to call *main.sh*:
 ```
 bash main.sh example 18 large
 ```
-This should produce the same output as shown in the folder *example*.
+This should produce the same output as shown in the folder *example* (still to be implemented).
 ## Credits
 A large amount of the scripts uses or is inspired by the code written by Camille Jarvis-Stiggants and Michael England during their MPhys project.
 
 
-**Author:** Marc Oriol Pérez / **Last modified:** 16th September 2023
+**Author:** Marc Oriol Pérez (marc.oriolperez@student.manchester.ac.uk) / **Last modified:** 16th September 2023
