@@ -5,6 +5,7 @@ In this repository there are the necessary tools in order to:
  - Make a selection of the events given a certain criteria
  - Remove multiple candidates
  - Perform a global fit on the data using a simultaneous fit
+ - Fit both using a binned and an unbinned approach
  - Create a uniform binning across the phase space
  - Perform a local fit in each of the phase space regions
  - Process the results and output them with relevant figures
@@ -26,14 +27,15 @@ git pull origin master
 
 ## How to use
 The different scripts can be run individually (note that a different set of arguments is required for each), or as a whole using the bash script *main.sh*.
-In order to use *main.sh* 3 arguments are required. These are:
+In order to use *main.sh* 4 arguments are required. These are:
 - The path where the output should be written
 - The year the data to be used was taken [16, 17, 18]
 - The size or amount of data to be used [small, medium, large, 1, 2, 3, 4, 5, 6, 7, 8]
+- Whether a binned fit should be performed (otherwise unbinned fit) [y, Y, n, N]
 
 Here is an example of how to call *main.sh*:
 ```
-bash main.sh example 18 large
+bash main.sh example 18 large y
 ```
 This should produce the same output as shown in the folder *example* (still to be implemented).
 ## Credits
