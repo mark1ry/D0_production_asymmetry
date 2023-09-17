@@ -1,8 +1,8 @@
 """
 model_fitting.py
 
-This code is used to fit the data in one of the bims. It then returns the relevant plots of the best fit to the data and a .txt file containing the values and errors on the normalization constant of both signal and background, the mean and standard deviation of the pull distribution and the reduced chi squared value. The model used consists of a Gaussian function and a Crystal Ball function for the signal, and a Chevychev polynomial for the background. Some of the parameters are fixed to be the same as the best-fit values obtained during the global fit in order to obtain better convergence.
-The year of interest, size of the data, meson of interest and polarity to be analysed must be specified using the required flags --year --size --meson --polarity. It is also required to specify the bin to be analyzed using the flag --bin. There also are the flags --input --parameteers_path and --path, which are not required. These are used to specify the directory where the input data is located, where the global best-fit parameters can be found and where the output should be written, respectively. By default it is set to be the current working directory.
+This code is used to fit the data in one of the bims. It then returns the relevant plots of the best fit to the data and a .txt file containing the values and errors on the normalization constant of both signal and background, the mean and standard deviation of the pull distribution and the reduced chi squared value. It can both fit the data using a binned approach or an unbinned one. The model used consists of a Gaussian function and a Crystal Ball function for the signal, and a Chevychev polynomial for the background. Some of the parameters are fixed to be the same as the best-fit values obtained during the global fit in order to obtain better convergence.
+The year of interest, size of the data, meson of interest and polarity to be analysed must be specified using the required flags --year --size --meson --polarity. It is also required to specify the bin to be analyzed using the flag --bin, and if the fit should be done on the binned data or the unbinned data using the flag --binned_fit. There also are the flags --input --parameteers_path and --path, which are not required. These are used to specify the directory where the input data is located, where the global best-fit parameters can be found and where the output should be written, respectively. By default it is set to be the current working directory.
 
 Author: Marc Oriol Pérez (marc.oriolperez@student.manchester.ac.uk)
 Last edited: 16th September 2023
@@ -49,6 +49,9 @@ def parse_arguments():
                 in the case it is not specified, the default path is the current working directory.
     --bin       Used to select the bin to be analysed.
                 The argument must be an integer between 00 and 99 (note that two characters must be entered for all integers)
+    --binned_fit
+                Used to specify if the data should be binned before performing the fit or an unbinned fit should be performed.
+                Type either y or Y for a binned fit. Type n or N for an unbinned fit.
                 
     Returns the parsed arguments.
     '''
@@ -108,13 +111,25 @@ def parse_arguments():
         required=True,
         help="flag to set the path where the output files should be written to"
     )
+    parser.add_argument(
+        "--binned_fit",
+        type=str,
+        choices=["y", "Y", "n", "N"],
+        required=True,
+        help="flag to set whether a binned or an unbinned should be performed (y/n)"
+    )
     
     return parser.parse_args()
 
 # - - - - - - - MAIN BODY - - - - - - - #
 
 options = parse_arguments()
-
+numbins = 100
+if options.binned_fit=="y" or options.binned_fit=="Y":
+    binned = True
+else:
+    binned = False
+    
 parameters = np.loadtxt(f"{options.parameters_path}/fit_parameters.txt", delimiter=',')
 
 # Read data
@@ -125,6 +140,9 @@ ttree.SetBranchStatus("*", 0)
 ttree.SetBranchStatus("D0_MM", 1)
 x = RooRealVar("D0_MM", "D0 mass / [MeV]", 1810, 1910) # D0_MM - invariant mass
 data = RooDataSet("data", "Data", ttree, RooArgSet(x))
+
+if binned:
+    x.setBins(numbins)
 
 # Define variables
 mu = RooRealVar("mu", "mu", 1865, 1862, 1868)
@@ -160,11 +178,15 @@ model = {
 }
 
 # Fit data
-model["total"].fitTo(data, RooFit.Save(), RooFit.Extended(1), RooFit.Minos(0))
+if binned:
+    hdata = data.binnedClone()
+    model["total"].fitTo(hdata, RooFit.Save(), RooFit.IntegrateBins(1e-3), RooFit.Extended(1), RooFit.Minos(0))
+    data = hdata
+else:
+    model["total"].fitTo(data, RooFit.Save(), RooFit.Extended(1), RooFit.Minos(0))
 
 # Generate plots
-chi2, pull_mean, pull_std = plot(x, data, model, nbins=100, setlogy=False, save_to=f'{options.path}/{options.meson}_{options.polarity}_{options.year}_{options.size}_bin{options.bin}_model1', plot_type=f"20{options.year} Mag{(options.polarity).title()}", meson=options.meson)
-
+chi2, pull_mean, pull_std = plot(x, data, model, nbins=numbins, setlogy=False, save_to=f'{options.path}/{options.meson}_{options.polarity}_{options.year}_{options.size}_bin{options.bin}', plot_type=f"20{options.year} Mag{(options.polarity).title()}", meson=options.meson)
 # Write out results
 file = open(f"{options.path}/yields_{options.meson}_{options.polarity}_{options.year}_{options.size}_bin{options.bin}.txt", "w")
 text = str(Nsig.getValV()) + ', ' + str(Nsig.getError()) + ', ' + str(Nbkg.getValV()) + ', ' + str(Nbkg.getError()) + ', ' + str(chi2) + ', ' + str(pull_mean) + ', ' + str(pull_std)

@@ -2,7 +2,7 @@
 fit_global.py
 
 This code is used to perform a global fit on the selected data. In order to do so a simulatenous fit is done on the four datasets (with different mesons and polarities). This simulatenous fit keeps all variables constant across the four fits except for the normalization constants which are allowed to vary independently. The model used consists of a Crystal Ball function and a Gaussian distribution to model the signal and a Chebychev polynomial to model the background.
-The year of interest and size of the data to be analysed must be specified using the required flags --year --size. There is a flag --path, which is not required. This one is used to specify the directory where the input data is located, and where the output file should be written. By default it is set to be the current working directory.
+The year of interest and size of the data to be analysed must be specified using the required flags --year --size. It is necessary to specify if the fit should be performed on the binned data or the unbinned data using the flag --binned_fit. There is a flag --path, which is not required. This one is used to specify the directory where the input data is located, and where the output file should be written. By default it is set to be the current working directory.
 It outputs the value of the constants shared in the simultaneous fit to a text file.
 
 Author: Marc Oriol Pérez (marc.oriolperez@student.manchester.ac.uk)
@@ -38,6 +38,9 @@ def parse_arguments():
     --polarity  Used to specify the polarity of the magnet the user is interested in.
                 The argument must be one of: [up, down].
                 in the case it is not specified, the default path is the current working directory.
+    --binned_fit
+                Used to specify if the data should be binned before performing the fit or an unbinned fit should be performed.
+                Type either y or Y for a binned fit. Type n or N for an unbinned fit.
     
     Returns the parsed arguments.
     '''
@@ -63,11 +66,23 @@ def parse_arguments():
         default=os.getcwd(),
         help="flag to set the path where the output files should be written to"
     )
+    parser.add_argument(
+        "--binned_fit",
+        type=str,
+        choices=["y", "Y", "n", "N"],
+        required=True,
+        help="flag to set whether a binned or an unbinned should be performed (y/n)"
+    )
     
     return parser.parse_args()
     
 # - - - - - - - MAIN BODY - - - - - - - #
 args = parse_arguments()
+numbins = 100
+if args.binned_fit=="y" or args.binned_fit=="Y":
+    binned = True
+else:
+    binned = False
 ROOT.gROOT.SetBatch(True)
 
 ttree_D0_up = TChain("D02Kpi_Tuple/DecayTree")
@@ -160,7 +175,12 @@ combData = ROOT.RooDataSet(
 simPdf = ROOT.RooSimultaneous("simPdf", "simultaneous pdf", {"D0_up": model_D0_up, "D0_down": model_D0_down, "D0bar_up": model_D0bar_up, "D0bar_down": model_D0bar_down}, sample)
 
 # Perform the fit
-fitResult = simPdf.fitTo(combData, PrintLevel=-1, Save=True)
+if binned:
+    hcombData = combData.binnedClone()
+    fitResult = simPdf.fitTo(hcombData, IntegrateBins=1e-3, PrintLevel=-1, Save=True)
+else:
+    fitResult = simPdf.fitTo(combData, PrintLevel=-1, Save=True)
+
 fitResult.Print()
 
 # Get results

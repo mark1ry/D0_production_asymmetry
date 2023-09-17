@@ -83,7 +83,7 @@ def read_from_file(meson, polarity, bin_num):
     
     Returns these two values.
     '''
-    with open(f'{options.input}/bin_num/yields_{meson}_{polarity}_{options.year}_{options.size}_bin{bin_num}.txt') as f:
+    with open(f'{options.input}/{bin_num}/yields_{meson}_{polarity}_{options.year}_{options.size}_bin{bin_num}.txt') as f:
         for line in f:
             currentline = line.split(",")
             Nsig = float(currentline[0])
